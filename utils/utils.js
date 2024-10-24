@@ -21,7 +21,7 @@ async function getStreamsFromAttachment(attachments) {
   for (const attachment of attachments) {
     const url = attachment.url;
     const ext = getExtFromUrl(url);
-    const fileName = `${utils.randomString(10)}.${ext}`;
+    const fileName = `${randomString(10)}.${ext}`;
     streams.push({
       pending: axios({
         url,
@@ -61,7 +61,7 @@ async function getStreamFromURL(url = "", pathName = "", options = {}) {
       ...options
     });
     if (!pathName)
-      pathName = utils.randomString(10) + (response.headers["content-type"] ? '.' + utils.getExtFromMimeType(response.headers["content-type"]) : ".noext");
+      pathName = randomString(10) + (response.headers["content-type"] ? '.' + getExtFromMimeType(response.headers["content-type"]) : ".noext");
     response.data.path = pathName;
     return response.data;
   }
@@ -172,7 +172,7 @@ async function translate(text, lang) {
     if (!text.match(/[^\s]+/))
       wordTransAfter.push(text);
     else
-      wordTransAfter.push(utils.translateAPI(text, lang));
+      wordTransAfter.push(translateAPI(text, lang));
   }
 
   let output = '';
@@ -240,6 +240,85 @@ async function uploadImgbb(file) {
     throw new CustomError(err.response ? err.response.data : err);
   }
 }
+function mssg(api, event) {
+  async function sendMessageError(err) {
+    if (typeof err === "object" && !err.stack)
+      err = removeHomeDir(JSON.stringify(err, null, 2));
+    else
+      err = removeHomeDir(`${err.name || err.error}: ${err.message}`);
+    return await api.sendMessage(err.message, event.threadID, event.messageID);
+  }
+  return {
+    send: async (form, callback) => {
+      try {
+        return await api.sendMessage(form, event.threadID, callback);
+      }
+      catch (err) {
+        if (JSON.stringify(err).includes('spam')) {
+          throw err;
+        }
+      }
+    },
+    reply: async (form, callback) => {
+      try {
+        return await api.sendMessage(form, event.threadID, callback, event.messageID);
+      }
+      catch (err) {
+        if (JSON.stringify(err).includes('spam')) {
+          throw err;
+        }
+      }
+    },
+    unsend: async (messageID, callback) => await api.unsendMessage(messageID, callback),
+    reaction: async (emoji, messageID, callback) => {
+      try {
+        return await api.setMessageReaction(emoji, messageID, callback, true);
+      }
+      catch (err) {
+        if (JSON.stringify(err).includes('spam')) {
+          throw err;
+        }
+      }
+    },
+    err: async (err) => await sendMessageError(err),
+    error: async (err) => await sendMessageError(err)
+  };
+};
+function removeHomeDir(fullPath) {
+	if (!fullPath || typeof fullPath !== "string")
+		throw new Error('The first argument (fullPath) must be a string');
+	while (fullPath.includes(process.cwd()))
+		fullPath = fullPath.replace(process.cwd(), "");
+	return fullPath;
+}
+function randomString(max, onlyOnce = false, possible) {
+	if (!max || isNaN(max))
+		max = 10;
+	let text = "";
+	possible = possible || "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+	for (let i = 0; i < max; i++) {
+		let random = Math.floor(Math.random() * possible.length);
+		if (onlyOnce) {
+			while (text.includes(possible[random]))
+				random = Math.floor(Math.random() * possible.length);
+		}
+		text += possible[random];
+	}
+	return text;
+}
+
+function randomNumber(min, max) {
+	if (!max) {
+		max = min;
+		min = 0;
+	}
+	if (min == null || min == undefined || isNaN(min))
+		throw new Error('The first argument (min) must be a number');
+	if (max == null || max == undefined || isNaN(max))
+		throw new Error('The second argument (max) must be a number');
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 
 
 module.exports = { 
@@ -251,5 +330,9 @@ module.exports = {
   translateAPI,
   downloadFile,
   translate,
-  uploadImgbb
+  uploadImgbb,
+  mssg,
+  removeHomeDir,
+  randomNumber,
+  randomString
 };
