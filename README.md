@@ -45,7 +45,7 @@ Welcome to the **Ryuu Bot** template! This project serves as a foundation for cr
 
 1. **Clone the Repository**: Clone or fork the repository to your local machine or Replit.
    ```bash
-   git clone https://github.com/JrDevProgect/Ryuu-Bot-Official.git
+   git clone https://github.com/lance-ui/rio
    cd Ryuu-Bot-Official
    ```
 
