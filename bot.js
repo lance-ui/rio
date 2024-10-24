@@ -1,3 +1,11 @@
+/**
+ * copyrights © lan ceq 2024
+ * copyrights © Jr busaco 2024
+ * 
+ * if you do not know what you doing
+ * just do not modify the code below
+ * @author lance && jr busaco
+ */
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
@@ -212,6 +220,11 @@ const runBot = () => {
 
             if (global.config.autopost) { 
                 autopost.handleEvent({ api });
+            };
+            let eventName = "";
+            const event = global.modules.events.get(eventName) || global.modules.events.get(eventName.toLowerCase());
+            if(event && global.apiOptions.listenenEvents == true){
+                return event.handle(api, event, global.modules.events, api)
             }
 
             process.on('unhandledRejection', (err, p) => {
